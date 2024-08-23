@@ -95,7 +95,7 @@ def main() -> None:
                 target_path_name: str = f"{asset_path_only}/{new_asset_name}.{new_asset_name}"
 
                 editor_asset_lib.rename_asset(asset_path_name, target_path_name)
-                print(f">>> Renaming [{asset_path_name}] to [{target_path_name}]")
+                unreal.log(f">>> Renaming [{asset_path_name}] to [{target_path_name}]")
 
             if slow_task.should_cancel():
                 break

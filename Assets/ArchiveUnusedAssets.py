@@ -48,14 +48,14 @@ def archive_unused_assets(working_path: str, archive_path: str) -> None:
                 dependencies = editor_asset_lib.find_package_referencers_for_asset(asset, load_assets=False)
 
                 if not dependencies:
-                    print(f">>> Archiving >>> {asset}")
+                    unreal.log(f">>> Archiving >>> {asset}")
 
                     asset_data = editor_asset_lib.find_asset_data(asset)
                     asset_name = asset_data.asset_name
                     target_path_name = f"{archive_path}{asset_name}.{asset_name}"
 
                     editor_asset_lib.rename_asset(asset_data.object_path, target_path_name)
-                    print(f">>> The asset original name [{asset_data.object_path}] and new is [{target_path_name}]")
+                    unreal.log(f">>> The asset original name [{asset_data.object_path}] and new is [{target_path_name}]")
 
                 if slow_task.should_cancel():
                     break

@@ -50,7 +50,7 @@ def delete_unused_assets(working_path: str) -> None:
                 dependencies = editor_asset_lib.find_package_referencers_for_asset(asset, load_assets=False)
 
                 if not dependencies:
-                    print(f">>> Deleting >>> {asset}")
+                    unreal.log(f">>> Deleting >>> {asset}")
                     editor_asset_lib.delete_asset(asset)
 
                 if slow_task.should_cancel():

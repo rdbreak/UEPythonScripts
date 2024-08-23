@@ -54,9 +54,9 @@ def unify_duplicates(working_path: str) -> None:
 
                 if matching_assets:
                     editor_asset_lib.consolidate_assets(process_asset_obj, matching_assets)
-                    print(f">>> Unifying process completed for {len(matching_assets)} assets")
+                    unreal.log(f">>> Unifying process completed for {len(matching_assets)} assets")
                 else:
-                    print(">>> No duplicates found for the selected asset")
+                    unreal.log(">>> No duplicates found for the selected asset")
 
                 if slow_task.should_cancel():
                     break

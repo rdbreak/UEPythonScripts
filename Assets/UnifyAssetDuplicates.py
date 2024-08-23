@@ -56,7 +56,7 @@ def unify_selected_asset_duplicates(selected_asset: unreal.Object, working_path:
             asset_name = asset_data.get_asset().get_name()
 
             if asset_name == selected_asset_name and asset != selected_asset_path:
-                print(f">>> Duplicate found for the asset {asset_name} located at {asset}")
+                unreal.log(f">>> Duplicate found for the asset {asset_name} located at {asset}")
                 matching_assets.append(asset_data.get_asset())
 
             if slow_task.should_cancel():
@@ -66,9 +66,9 @@ def unify_selected_asset_duplicates(selected_asset: unreal.Object, working_path:
 
     if matching_assets:
         editor_asset_lib.consolidate_assets(selected_asset, matching_assets)
-        print(f">>> Unifying process completed for {len(matching_assets)} assets")
+        unreal.log(f">>> Unifying process completed for {len(matching_assets)} assets")
     else:
-        print(">>> No duplicates found for the selected asset")
+        unreal.log(">>> No duplicates found for the selected asset")
 
 
 def main() -> None:
@@ -82,7 +82,7 @@ def main() -> None:
         selected_asset = selected_assets[0]
         unify_selected_asset_duplicates(selected_asset, WORKING_PATH)
     else:
-        print(">>> No asset selected. Please select an asset to check for duplicates.")
+        unreal.log(">>> No asset selected. Please select an asset to check for duplicates.")
 
 
 if __name__ == "__main__":

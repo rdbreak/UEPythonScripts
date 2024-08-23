@@ -49,7 +49,7 @@ def find_unused_assets(working_path: str) -> List[str]:
         dependencies = editor_asset_lib.find_package_referencers_for_asset(asset, load_assets=False)
         if not dependencies:
             unused_assets.append(asset)
-            print(f">>> {asset}")
+            unreal.log(f">>> {asset}")
 
     return unused_assets
 

@@ -27,6 +27,6 @@ for actor in selectedActors:
     SMCompts = actor.get_components_by_class(unreal.StaticMeshComponent)
     for SMCompt in SMCompts:
         SMComptT = SMCompt.get_editor_property("relative_location")
-        print(SMComptT)
+        unreal.log(SMComptT)
         SMCompt.set_editor_property("relative_location", unreal.Vector(0.0, 0.0, 0.0))
-        print(SMComptT)
+        unreal.log(SMComptT)
