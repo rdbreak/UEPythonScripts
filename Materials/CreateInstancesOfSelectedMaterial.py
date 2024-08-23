@@ -1,51 +1,79 @@
-#										_
-#									   (_)
-#  _ __ ___   __ _ _ __ ___   ___  _ __  _  ___ _ __ ___
-# | '_ ` _ \ / _` | '_ ` _ \ / _ \| '_ \| |/ _ \ '_ ` _ \
-# | | | | | | (_| | | | | | | (_) | | | | |  __/ | | | | |
-# |_| |_| |_|\__,_|_| |_| |_|\___/|_| |_|_|\___|_| |_| |_|
-#					www.mamoniem.com
-#					  www.ue4u.xyz
-#Copyright 2022 Muhammad A.Moniem (@_mamoniem). All Rights Reserved.
-#
+"""
+This script automates the creation of multiple material instances from a selected base material in Unreal Engine.
+It generates a specified number of material instances, naming them sequentially, and setting their parent to the selected material.
+
+Usage:
+    - Select a base material in the Unreal Editor.
+    - Set the `TOTAL_REQUIRED_INSTANCES` variable to the number of instances you want to create.
+    - Run the script within the Unreal Editor's Python environment.
+
+Features:
+    - Automatically generates material instances based on a selected base material.
+    - Names instances sequentially and organizes them in the content browser.
+    - Provides a basic template for batch-creating asset instances.
+"""
 
 import unreal
 
-#Set the instances count needed
-totalRequiredInstances = 10
+# Set the number of instances to create
+TOTAL_REQUIRED_INSTANCES: int = 10
 
-#General variables, will be auto set
-newAssetName = ""
-sourceAssetPath = ""
-createdAssetsPath = ""
 
 @unreal.uclass()
-class EditorUtil(unreal.GlobalEditorUtilityBase):
+class EditorUtility(unreal.GlobalEditorUtilityBase):
+    """Subclass of Unreal's GlobalEditorUtilityBase for custom utility operations."""
     pass
+
 
 @unreal.uclass()
-class MaterialEditingLib(unreal.MaterialEditingLibrary):
+class MaterialEditingLibrary(unreal.MaterialEditingLibrary):
+    """Subclass of Unreal's MaterialEditingLibrary for material editing operations."""
     pass
 
-editorUtil = EditorUtil()
-materialEditingLib = MaterialEditingLib()
 
-selectedAssets = editorUtil.get_selected_assets()
+def create_material_instances(base_material: unreal.Material, instance_count: int) -> None:
+    """
+    Create a specified number of material instances from a selected base material.
 
-factory = unreal.MaterialInstanceConstantFactoryNew()
+    Args:
+        base_material (unreal.Material): The base material from which instances will be created.
+        instance_count (int): The number of material instances to create.
+    """
+    asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+    factory = unreal.MaterialInstanceConstantFactoryNew()
 
-asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+    base_material_name = base_material.get_name()
+    base_material_path = base_material.get_path_name()
+    created_assets_path = base_material_path.replace(base_material_name, "").rstrip(".")
 
-for selectedAsset in selectedAssets:
-    newAssetName = selectedAsset.get_name() + "_%s_%d"
-    sourceAssetPath = selectedAsset.get_path_name()
+    material_editing_lib = MaterialEditingLibrary()
 
-    createdAssetsPath = sourceAssetPath.replace(selectedAsset.get_name(), "-")
-    createdAssetsPath = createdAssetsPath.replace("-.-", "")
+    for i in range(instance_count):
+        instance_name = f"{base_material_name}_inst_{i + 1}"
+        instance_path = f"{created_assets_path}/{instance_name}"
+
+        new_instance = asset_tools.create_asset(instance_name, created_assets_path, None, factory)
+        material_editing_lib.set_material_instance_parent(new_instance, base_material)
+
+        unreal.log(f"Created Material Instance: {instance_name} at {instance_path}")
 
 
-    for x in range(totalRequiredInstances):
+def main() -> None:
+    """Main function to execute the creation of material instances."""
+    editor_util = EditorUtility()
+    selected_assets = editor_util.get_selected_assets()
 
-        newAsset = asset_tools.create_asset(newAssetName %("inst", x+1), createdAssetsPath, None, factory)
+    if not selected_assets:
+        unreal.log_error("No material selected. Please select a material.")
+        return
 
-        materialEditingLib.set_material_instance_parent(newAsset, selectedAsset)
+    base_material = selected_assets[0]
+    if not isinstance(base_material, unreal.Material):
+        unreal.log_error("Selected asset is not a material. Please select a valid material.")
+        return
+
+    create_material_instances(base_material, TOTAL_REQUIRED_INSTANCES)
+
+
+if __name__ == "__main__":
+    main()
