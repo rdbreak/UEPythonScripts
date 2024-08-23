@@ -1,118 +1,106 @@
-#										_
-#									   (_)
-#  _ __ ___   __ _ _ __ ___   ___  _ __  _  ___ _ __ ___
-# | '_ ` _ \ / _` | '_ ` _ \ / _ \| '_ \| |/ _ \ '_ ` _ \
-# | | | | | | (_| | | | | | | (_) | | | | |  __/ | | | | |
-# |_| |_| |_|\__,_|_| |_| |_|\___/|_| |_|_|\___|_| |_| |_|
-#					www.mamoniem.com
-#					  www.ue4u.xyz
-#Copyright 2022 Muhammad A.Moniem (@_mamoniem). All Rights Reserved.
-#
+"""
+This script automates the process of renaming Unreal Engine assets by adding a specific prefix
+based on the asset type. It iterates over all assets within a specified directory, checks if the
+asset name already contains the appropriate prefix, and if not, renames the asset accordingly.
+
+The script is designed to work with various asset types, including materials, animations, textures,
+and blueprints, among others. It uses the Unreal Python API to interact with assets within the
+Unreal Engine editor, making it a powerful tool for organizing and managing large projects.
+
+Key Features:
+- Automatically detects the asset type and applies the correct prefix.
+- Skips assets that already have the correct prefix to avoid redundant renaming.
+- Integrates with Unreal Engine's ScopedSlowTask to provide a progress bar and allow for task cancellation.
+
+This script is ideal for developers and artists who need to enforce naming conventions across
+their Unreal Engine projects, ensuring consistency and easier asset management.
+
+Usage:
+- Place this script within your Unreal Engine project's script directory.
+- Adjust the `WORKING_PATH` variable if necessary to target a different directory.
+- Run the script within the Unreal Editor's Python environment.
+"""
+
+from typing import Dict, List
 
 import unreal
 
-#You can set the prefix of your choice here
-prefixAnimationBlueprint    = "animBP"
-prefixAnimationSequence     = "anim"
-prefixAnimation             = "anim"
-prefixBlendSpace            = "animBlnd"
-prefixBlueprint             = "bp"
-prefixCurveFloat            = "crvF"
-prefixCurveLinearColor      = "crvL"
-prefixLevel                 = "lvl"
-prefixMaterial              = "mat"
-prefixMaterialFunction      = "mat_func"
-prefixMaterialInstance      = "mat_inst"
-prefixParticleSystem        = "fx"
-prefixPhysicsAsset          = "phsx"
-prefixSkeletalMesh          = "sk"
-prefixSkeleton              = "skln"
-prefixSoundCue              = "cue"
-prefixSoundWave             = "wv"
-prefixStaticMesh            = "sm"
-prefixTexture2D             = "tex"
-prefixTextureCube           = "HDRI"
+# Define prefixes for different asset types
+PREFIXES: Dict[str, str] = {
+    "AnimBlueprint":    "animBP",
+    "AnimSequence":     "anim",
+    "Animation":        "anim",
+    "BlendSpace1D":     "animBlnd",
+    "Blueprint":        "bp",
+    "CurveFloat":       "crvF",
+    "CurveLinearColor": "crvL",
+    "Material":         "mat",
+    "MaterialFunction": "mat_func",
+    "MaterialInstance": "mat_inst",
+    "ParticleSystem":   "fx",
+    "PhysicsAsset":     "phsx",
+    "SkeletalMesh":     "sk",
+    "Skeleton":         "skln",
+    "SoundCue":         "cue",
+    "SoundWave":        "wv",
+    "StaticMesh":       "sm",
+    "Texture2D":        "tex",
+    "TextureCube":      "HDRI"
+}
 
+WORKING_PATH: str = "/Game/"
 
-workingPath = "/Game/"
 
 @unreal.uclass()
 class GetEditorAssetLibrary(unreal.EditorAssetLibrary):
+    """Subclass of Unreal's EditorAssetLibrary to allow custom asset operations."""
     pass
 
-def GetProperPrefix(className):
-    _prefix = ""
-    if className == "AnimBlueprint":
-        _prefix = prefixAnimationBlueprint
-    elif className == "AnimSequence":
-        _prefix = prefixAnimationSequence
-    elif className == "Animation":
-        _prefix = prefixAnimation
-    elif className == "BlendSpace1D":
-        _prefix = prefixBlendSpace
-    elif className == "Blueprint":
-        _prefix = prefixBlueprint
-    elif className == "CurveFloat":
-        _prefix = prefixCurveFloat
-    elif className == "CurveLinearColor":
-        _prefix = prefixCurveLinearColor
-    elif className == "Material":
-        _prefix = prefixMaterial
-    elif className == "MaterialFunction":
-        _prefix = prefixMaterialFunction
-    elif className == "MaterialInstance":
-        _prefix = prefixMaterialInstance
-    elif className == "ParticleSystem":
-        _prefix = prefixParticleSystem
-    elif className == "PhysicsAsset":
-        _prefix = prefixPhysicsAsset
-    elif className == "SkeletalMesh":
-        _prefix = prefixSkeletalMesh
-    elif className == "Skeleton":
-        _prefix = prefixSkeleton
-    elif className == "SoundCue":
-        _prefix = prefixSoundCue
-    elif className == "SoundWave":
-        _prefix = prefixSoundWave
-    elif className == "StaticMesh":
-        _prefix = prefixStaticMesh
-    elif className == "Texture2D":
-        _prefix = prefixTexture2D
-    elif className == "TextureCube":
-        _prefix = prefixTextureCube
-    else:
-        _prefix = ""
 
-    return _prefix
+def get_proper_prefix(class_name: str) -> str:
+    """Retrieve the appropriate prefix based on the asset class name.
 
-editorAssetLib = GetEditorAssetLibrary()
+    Args:
+        class_name (str): The name of the asset class.
 
-allAssets = editorAssetLib.list_assets(workingPath, True, False)
-allAssetsCount = len(allAssets)
-
-selectedAssetPath = workingPath
-
-with unreal.ScopedSlowTask(allAssetsCount, selectedAssetPath) as slowTask:
-    slowTask.make_dialog(True)
-    for asset in allAssets:
-        _assetData = editorAssetLib.find_asset_data(asset)
-        _assetName = _assetData.get_asset().get_name()
-        _assetPathName = _assetData.get_asset().get_path_name()
-        _assetPathOnly = _assetPathName.replace((_assetName + "." + _assetName), "")
-        _assetClassName = _assetData.get_asset().get_class().get_name()
-        _assetPrefix = GetProperPrefix(_assetClassName)
+    Returns:
+        str: The corresponding prefix for the asset class. Returns an empty string if no prefix is found.
+    """
+    return PREFIXES.get(class_name, "")
 
 
-        if _assetPrefix in _assetName:
-            continue
-        elif _assetPrefix == "":
-            continue
-        else:
-            _targetPathName = _assetPathOnly + ("%s%s%s%s%s%s%s" % (_assetPrefix, "_", _assetName, ".", _assetPrefix, "_", _assetName))
+def main() -> None:
+    """Main function to rename assets based on their class type by adding a prefix.
 
-            editorAssetLib.rename_asset(_assetPathName, _targetPathName)
-            print (">>> Renaming [%s] to [%s]" % (_assetPathName, _targetPathName))
+    This function iterates through all assets in the specified working path, checks if the asset name
+    already contains the appropriate prefix, and if not, renames the asset by adding the correct prefix.
+    """
+    editor_asset_lib: GetEditorAssetLibrary = GetEditorAssetLibrary()
+    all_assets: List[str] = editor_asset_lib.list_assets(WORKING_PATH, recursive=True, include_folder=False)
+    all_assets_count: int = len(all_assets)
 
-        if slowTask.should_cancel():
-            break
-        slowTask.enter_progress_frame(1, asset)
+    with unreal.ScopedSlowTask(all_assets_count, "Processing assets") as slow_task:
+        slow_task.make_dialog(True)
+
+        for asset in all_assets:
+            asset_data: unreal.AssetData = editor_asset_lib.find_asset_data(asset)
+            asset_name: str = asset_data.asset_name
+            asset_class_name: str = asset_data.asset_class
+            asset_prefix: str = get_proper_prefix(asset_class_name)
+
+            if asset_prefix and not asset_name.startswith(asset_prefix):
+                new_asset_name: str = f"{asset_prefix}_{asset_name}"
+                asset_path_name: str = asset_data.object_path
+                asset_path_only: str = asset_data.package_path
+                target_path_name: str = f"{asset_path_only}/{new_asset_name}.{new_asset_name}"
+
+                editor_asset_lib.rename_asset(asset_path_name, target_path_name)
+                print(f">>> Renaming [{asset_path_name}] to [{target_path_name}]")
+
+            if slow_task.should_cancel():
+                break
+            slow_task.enter_progress_frame(1, asset_name)
+
+
+if __name__ == "__main__":
+    main()
