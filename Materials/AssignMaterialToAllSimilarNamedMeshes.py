@@ -1,62 +1,91 @@
-#										_
-#									   (_)
-#  _ __ ___   __ _ _ __ ___   ___  _ __  _  ___ _ __ ___
-# | '_ ` _ \ / _` | '_ ` _ \ / _ \| '_ \| |/ _ \ '_ ` _ \
-# | | | | | | (_| | | | | | | (_) | | | | |  __/ | | | | |
-# |_| |_| |_|\__,_|_| |_| |_|\___/|_| |_|_|\___|_| |_| |_|
-#					www.mamoniem.com
-#					  www.ue4u.xyz
-#Copyright 2022 Muhammad A.Moniem (@_mamoniem). All Rights Reserved.
-#
+"""
+This script assigns a specified material to all static mesh assets within a directory that have a name similar 
+to a selected mesh. It automates the process of applying materials across multiple meshes, helping to maintain 
+consistent visual styles in an Unreal Engine project.
+
+Usage:
+    - Select a mesh and a material in the Unreal Editor.
+    - Set the `WORKING_PATH` to the directory where the meshes are located.
+    - Run the script within the Unreal Editor's Python environment.
+
+Features:
+    - Scans all static meshes in the specified directory.
+    - Finds and applies the selected material to all meshes with a matching name.
+    - Displays a progress dialog with the option to cancel the operation.
+"""
+
+from typing import List
 
 import unreal
 
-workingPath = "/Game/"
+WORKING_PATH: str = "/Game/"
+
 
 @unreal.uclass()
-class EditorUtil(unreal.GlobalEditorUtilityBase):
+class EditorAssetLibrary(unreal.EditorAssetLibrary):
+    """Subclass of Unreal's EditorAssetLibrary for custom asset operations."""
     pass
+
 
 @unreal.uclass()
-class GetEditorAssetLibrary(unreal.EditorAssetLibrary):
+class EditorUtility(unreal.GlobalEditorUtilityBase):
+    """Subclass of Unreal's GlobalEditorUtilityBase for utility operations."""
     pass
 
-editorUtil = EditorUtil()
-editorAssetLib = GetEditorAssetLibrary()
 
-selectedAssets = editorUtil.get_selected_assets()
-selectedAssetMesh = selectedAssets[0]
-selectedAssetMaterial = selectedAssets[1]
+def assign_material_to_similar_named_meshes(working_path: str) -> None:
+    """
+    Assign a selected material to all static meshes with a similar name within the specified directory.
 
-selectedAssetName = selectedAssetMesh.get_name()
-selectedAssetPath = selectedAssetMesh.get_path_name()
-selectedAssetClass = selectedAssetMesh.get_class()
+    Args:
+        working_path (str): The directory path to search for static meshes.
+    """
+    editor_asset_lib = EditorAssetLibrary()
+    editor_util = EditorUtility()
 
-allAssets = editorAssetLib.list_assets(workingPath, True, False)
-allAssetsCount = len(allAssets)
+    selected_assets = editor_util.get_selected_assets()
+    if len(selected_assets) < 2:
+        unreal.log_error("Please select both a mesh and a material.")
+        return
 
-assetsMatching = []
-assetsMatching.append(selectedAssetMesh)
+    selected_mesh = selected_assets[0]
+    selected_material = selected_assets[1]
 
-with unreal.ScopedSlowTask(allAssetsCount, selectedAssetPath) as slowTask:
-    slowTask.make_dialog(True)
-    for asset in allAssets:
-        _assetData = editorAssetLib.find_asset_data(asset)
-        _assetName = _assetData.get_asset().get_name()
-        _assetClass = _assetData.get_asset().get_class()
+    selected_mesh_name = selected_mesh.get_name()
+    selected_mesh_class = selected_mesh.get_class()
 
-        if (_assetName == selectedAssetName):
-            if (asset != selectedAssetPath):
-                print (">>> There is a duplicate found for the asset %s located at %s" % (_assetName, asset))
-                _assetLoaded = editorAssetLib.load_asset(asset)
-                if(_assetClass == selectedAssetClass):
-                    assetsMatching.append(_assetData.get_asset())
-        if slowTask.should_cancel():
-            break
-        slowTask.enter_progress_frame(1, asset)
+    all_assets: List[str] = editor_asset_lib.list_assets(working_path, recursive=True, include_folder=False)
+    all_assets_count: int = len(all_assets)
+
+    matching_meshes = [selected_mesh]
+
+    with unreal.ScopedSlowTask(all_assets_count, f"Assigning material to meshes similar to {selected_mesh_name}") as slow_task:
+        slow_task.make_dialog(True)
+
+        for asset in all_assets:
+            asset_data = editor_asset_lib.find_asset_data(asset)
+            asset_name = asset_data.asset_name
+            asset_class = asset_data.asset_class
+
+            if asset_name == selected_mesh_name and asset != selected_mesh.get_path_name():
+                if asset_class == selected_mesh_class:
+                    matching_meshes.append(asset_data.get_asset())
+                    unreal.log(f"Found matching mesh: {asset_name}")
+
+            if slow_task.should_cancel():
+                break
+
+            slow_task.enter_progress_frame(1, asset_name)
+
+    for mesh in matching_meshes:
+        mesh.set_material(0, selected_material)
+        unreal.log(f"Assigned material to mesh: {mesh.get_name()}")
 
 
-if (len(assetsMatching) != 0):
-    for x in range(len(assetsMatching)):
-        editorAssetLib.load_asset(assetsMatching[x].get_path_name())
-        assetsMatching[x].set_material(0, selectedAssetMaterial)
+def main() -> None:
+    """Main function to execute the assignment of material to similar named meshes."""
+    assign_material_to_similar_named_meshes(WORKING_PATH)
+
+
+if __name__ == "__main__":
+    main()
